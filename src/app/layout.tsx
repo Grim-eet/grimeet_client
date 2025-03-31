@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+
 import ReactQueryClientProvider from "../../config/ReactQueryClientProvider";
+
 
 export const metadata: Metadata = {
   title: "Grimeet",
@@ -13,10 +15,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+
     <ReactQueryClientProvider>
       <html lang="en">
         <body>{children}</body>
       </html>
     </ReactQueryClientProvider>
+
   );
 }
