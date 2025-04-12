@@ -7,7 +7,7 @@ export const HomeBtn = () => {
   const router = useRouter();
 
   const handleClick = () => {
-    router.push("/");
+    router.push("/main");
   };
 
   return (
