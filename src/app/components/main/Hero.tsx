@@ -8,7 +8,7 @@ export const Hero = () => {
           src={'/grie.jpg'}
           alt="메인 이미지"
           fill
-          className="object-cover"
+          className="object-cover rounded-md"
           quality={100}
           priority
         />
