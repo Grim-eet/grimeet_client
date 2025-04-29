@@ -1,15 +1,13 @@
-
-import Image from "next/image";
-import { Input } from "./components/common/Input";
-import { HomeBtn } from "./components/common/HomeBtn";
+import {MainContain} from './components/main/MainContain';
+// import {SideMenu} from './components/common/SideMenu';
 
 export default function Home() {
   return (
     <main>
-      <Input inputName={"email"} />
-      <Input inputName={"password"} />
-      <HomeBtn />
+      <div className="p-8">
+        <MainContain />
+        {/* <SideMenu /> */}
+      </div>
     </main>
   );
-
 }

@@ -1,10 +1,25 @@
-"use client";
+'use client';
 
-import { Input } from "../../components/common/Input";
-import loginimg from "../../../../public/images/loginimg.png";
-import Image from "next/image";
+import {Input} from '../../components/common/Input';
+import loginimg from '../../../../public/images/loginimg.png';
+import Image from 'next/image';
+import pwdFindAction from '@/api/auth/pwdFindAction';
+import {useState} from 'react';
 
 export default function PwInquiry() {
+  const [emailId, setEmailId] = useState();
+
+  const handleChange = () => {};
+
+  const handlePwdFind = async () => {
+    try {
+      const res = await pwdFindAction();
+      console.log(res);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="flex min-h-screen mx-5 md:mx-20 lg:mx-32 xl:mx-40 2xl:mx-60">
       {/* 왼쪽: 이미지 영역 */}
@@ -26,21 +41,19 @@ export default function PwInquiry() {
 
         {/* 이메일 입력 */}
         <div className="mb-4 w-full max-w-xs">
-          <Input inputName={"email"} />
-        </div>
-
-        {/* 이름 입력 */}
-        <div className="mb-4 w-full max-w-xs">
-          <Input inputName={"name"} />
+          <Input name={'email'} onChange={handleChange} />
         </div>
 
         {/* 닉네임 입력 */}
         <div className="mb-4 w-full max-w-xs">
-          <Input inputName={"nickname"} />
+          <Input name={'nickname'} onChange={handleChange} />
         </div>
 
         {/* 로그인 버튼 */}
-        <button className="w-full max-w-xs mt-5 mb-6 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500">
+        <button
+          className="w-full max-w-xs mt-5 mb-6 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          onClick={handlePwdFind}
+        >
           비밀번호 찾기
         </button>
 

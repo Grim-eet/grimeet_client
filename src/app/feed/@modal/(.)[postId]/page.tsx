@@ -1,32 +1,22 @@
-'use client';
-
+import {handleOpenComments} from '@/api/feed/feedAction';
 import {FeedDetail} from '@/app/components/feed/FeedDetail';
-import {useRouter} from 'next/navigation';
+import {ModalClose} from '@/app/components/feed/modal/ModalClose';
+import {ModalContentWrapper} from '@/app/components/feed/modal/ModalContentWrapper';
 
-export default async function FeedModal({params}: {params: {postId: string}}) {
-  const router = useRouter();
+export default async function FeedModal({
+  params,
+}: {
+  params: Promise<{postId: string}>;
+}) {
+  const resolveParams = await params;
+  const postId = resolveParams.postId;
 
-  const handleClose = () => {
-    router.back();
-  };
-
-  const handleOpenComments = () => {
-    console.log('댓글열기');
-  };
   return (
-    <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
-      onClick={handleClose}
-    >
-      <div
-        className="bg-white rounded-lg p-4 max-w-xl w-full"
-        onClick={(e) => e.stopPropagation}
-      >
-        <FeedDetail
-          feedId={params.postId}
-          onOpenComments={handleOpenComments}
-        />
-      </div>
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
+      <ModalClose />
+      <ModalContentWrapper>
+        <FeedDetail feedId={postId} onOpenComments={handleOpenComments} />
+      </ModalContentWrapper>
     </div>
   );
 }

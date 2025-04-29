@@ -25,7 +25,10 @@ export const FeedRoot = ({feedId}: {feedId: string}) => {
           <Link href={`/feed/${feedId}`} scroll={false}>
             <FeedImage />
           </Link>
-          <FeedDetail onOpenComments={handleOpenCommentDrawer} />
+          <FeedDetail
+            onOpenComments={handleOpenCommentDrawer}
+            feedId={feedId}
+          />
         </main>
       </div>
     </>

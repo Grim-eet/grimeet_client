@@ -1,12 +1,12 @@
-import { useState } from "react";
-import save from "../../../../public/images/save.png";
-import exportIcon from "../../../../public/images/export.png";
-import share from "../../../../public/images/share.png";
-import undo from "../../../../public/images/undo.png";
-import minimize from "../../../../public/images/minimize.png";
-import expand from "../../../../public/images/expand.png";
+import {useState} from 'react';
+import save from '../../../../public/images/save.png';
+import exportIcon from '../../../../public/images/export.png';
+import share from '../../../../public/images/share.png';
+import undo from '../../../../public/images/undo.png';
+import minimize from '../../../../public/images/minimize.png';
+import expand from '../../../../public/images/expand.png';
 
-import Image from "next/image";
+import Image from 'next/image';
 
 export const SketchbookSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -21,7 +21,7 @@ export const SketchbookSidebar = () => {
       {/* 확장된 사이드바 */}
       <div
         className={`flex flex-col h-screen bg-[#120b1e] border-r border-gray-200 p-4 transition-all duration-300 ease-in-out ${
-          isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-52 opacity-100"
+          isCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-52 opacity-100'
         }`}
       >
         <div className="mb-6">
@@ -31,7 +31,7 @@ export const SketchbookSidebar = () => {
         <div className="flex flex-col space-y-2">
           <button
             className={`w-full text-left px-3 py-2 rounded hover:bg-gray-200 hover:text-black transition-colors ${
-              isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-52 opacity-100"
+              isCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-52 opacity-100'
             }`}
           >
             <Image src={save} alt="save" className="inline-block mr-2" />
@@ -39,7 +39,7 @@ export const SketchbookSidebar = () => {
           </button>
           <button
             className={`w-full text-left px-3 py-2 rounded hover:bg-gray-200 hover:text-black transition-colors ${
-              isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-52 opacity-100"
+              isCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-52 opacity-100'
             }`}
           >
             <Image
@@ -51,7 +51,7 @@ export const SketchbookSidebar = () => {
           </button>
           <button
             className={`w-full text-left px-3 py-2 rounded hover:bg-gray-200 hover:text-black transition-colors ${
-              isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-52 opacity-100"
+              isCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-52 opacity-100'
             }`}
           >
             <Image src={share} alt="share" className="inline-block mr-2" />
@@ -59,7 +59,7 @@ export const SketchbookSidebar = () => {
           </button>
           <button
             className={`w-full text-left px-3 py-2 rounded hover:bg-gray-200 hover:text-black transition-colors ${
-              isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-52 opacity-100"
+              isCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-52 opacity-100'
             }`}
           >
             <Image src={undo} alt="undo" className="inline-block mr-2" />
@@ -67,7 +67,7 @@ export const SketchbookSidebar = () => {
           </button>
           <button
             className={`w-full text-left px-3 py-2 rounded hover:bg-gray-200 hover:text-black transition-colors ${
-              isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-52 opacity-100"
+              isCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-52 opacity-100'
             }`}
             onClick={toggleSidebar}
           >
@@ -93,7 +93,7 @@ export const SketchbookSidebar = () => {
       {/* 축소된 상태에서 보여질 버튼 */}
       <div
         className={`fixed left-0 top-1/2 transform -translate-y-1/2 z-10 ${
-          isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
+          isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'
         } transition-opacity duration-300 ease-in-out`}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
@@ -101,11 +101,11 @@ export const SketchbookSidebar = () => {
         <button
           onClick={toggleSidebar}
           className={`bg-[#120b1e] text-white p-2 rounded-r-lg shadow-md transition-all ${
-            isHovering ? "scale-110" : "scale-100"
+            isHovering ? 'scale-110' : 'scale-100'
           }`}
         >
           {/* 확장 아이콘 (>) */}
-          {isHovering ? ">" : ">"}
+          {isHovering ? '>' : '>'}
         </button>
       </div>
     </>
