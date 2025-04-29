@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Input } from "../../components/common/Input";
-import loginimg from "../../../../public/images/loginimg.png";
-import Image from "next/image";
+import {Input} from '../../components/common/Input';
+import loginimg from '../../../../public/images/loginimg.png';
+import Image from 'next/image';
 
 export default function IdInquiry() {
   return (
@@ -26,12 +26,12 @@ export default function IdInquiry() {
 
         {/* 이름 입력 */}
         <div className="mb-4 w-full max-w-xs">
-          <Input inputName={"name"} />
+          <Input name={'name'} />
         </div>
 
         {/* 닉네임 입력 */}
         <div className="mb-4 w-full max-w-xs">
-          <Input inputName={"nickname"} />
+          <Input name={'nickname'} />
         </div>
 
         {/* 로그인 버튼 */}
