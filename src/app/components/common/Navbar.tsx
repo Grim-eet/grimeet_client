@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import Link from 'next/link';
 
 export const Navbar = () => {
   return (
@@ -9,10 +8,10 @@ export const Navbar = () => {
           GRIMEET
         </Link>
         <div className="flex gap-4">
-          <Link href={'/'} className="hover:text-gray-500">
+          <Link href={'/login'} className="hover:text-gray-500">
             로그인
           </Link>
-          <Link href={'/'} className="hover:text-gray-500">
+          <Link href={'/signup'} className="hover:text-gray-500">
             회원가입
           </Link>
         </div>

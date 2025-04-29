@@ -7,6 +7,7 @@ import {LoginFieldErrors, LoginInput, LoginSchema} from '@/types/auth';
 import loginAction from '@/api/auth/loginAction';
 import {useRouter} from 'next/navigation';
 import {LoginForm} from '../auth/login/LoginForm';
+import googleAction from '@/api/auth/googleAction';
 
 export default function Login() {
   const router = useRouter();
@@ -19,7 +20,10 @@ export default function Login() {
   const [errors, setErrors] = useState<LoginFieldErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(undefined);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
 
+  //form 데이터 저장
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const {name, value, type, checked} = e.target;
 
@@ -39,6 +43,7 @@ export default function Login() {
     }
   };
 
+  //로그인 제출
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
@@ -67,11 +72,54 @@ export default function Login() {
       const res = await loginAction(validationResult.data);
 
       console.log(res);
-      router.push('/');
+      if (res?.data) {
+        console.log('로그인 성공');
+
+        router.push('/');
+      } else if (res?.error) {
+        if (res.details) {
+          const formattedErrors: LoginFieldErrors = {};
+          for (const key in res.details) {
+            const typedKey = key as keyof LoginInput;
+            if (Object.prototype.hasOwnProperty.call(res.details, typedKey)) {
+              formattedErrors[typedKey] = res.details[typedKey];
+            }
+          }
+          setErrors(formattedErrors);
+        }
+        setFormError(
+          typeof res.error === 'string'
+            ? res.error
+            : '로그인 정보를 확인해 주세요'
+        );
+      } else {
+        alert('로그인을 실패했습니다. 다시 시도해주세요');
+      }
     } catch (error) {
       console.error(error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  //구글 로그인
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    setGoogleError(null);
+    setErrors({});
+    setFormError(undefined);
+
+    try {
+      const googleAuthURl = await googleAction();
+
+      if (!googleAuthURl) {
+        console.error('구글 로그인 URL을 받지 못했습니다.');
+        setIsGoogleLoading(false);
+        return;
+      }
+      window.location.href = googleAuthURl;
+    } catch (error) {
+      console.error('구글 로그인에대해 실패 했습니다.');
     }
   };
 
@@ -133,7 +181,7 @@ export default function Login() {
             <LoginForm.Link href="/auth/idinquiry">아이디 찾기</LoginForm.Link>
             <LoginForm.Link href="/auth/pwinquiry">
               비밀번호 찾기
-            </LoginForm.Link>{' '}
+            </LoginForm.Link>
             {/* 경로 수정 */}
           </LoginForm.LinksContainer>
 
@@ -141,7 +189,7 @@ export default function Login() {
 
           <LoginForm.SocialLoginContainer>
             {/* 소셜 로그인 버튼 클릭 핸들러 추가 필요 */}
-            <LoginForm.SocialButton onClick={() => console.log('Google Login')}>
+            <LoginForm.SocialButton onClick={handleGoogleLogin}>
               Continue with Google
             </LoginForm.SocialButton>
             <LoginForm.SocialButton onClick={() => console.log('Kakao Login')}>
@@ -158,68 +206,3 @@ export default function Login() {
     </div>
   );
 }
-
-// {/* <h1 className="font-bold text-2xl mb-2">GRIMEET</h1>
-// <h2 className="font-bold text-xl mb-6">로그인</h2>
-
-// {/* 이메일 입력 */}
-// <div className="mb-4 w-full max-w-xs">
-//   <Input name={'email'} />
-// </div>
-
-// {/* 비밀번호 입력 */}
-// <div className="mb-4 w-full max-w-xs">
-//   <Input name={'password'} />
-// </div>
-
-// {/* 자동 로그인 체크박스 */}
-// <div className="mb-6 flex items-center w-full max-w-xs">
-//   <input
-//     type="checkbox"
-//     id="auto-login"
-//     className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-//   />
-//   <label htmlFor="auto-login" className="ml-2 text-sm">
-//     자동 로그인
-//   </label>
-// </div>
-
-// {/* 로그인 버튼 */}
-// <button className="w-full max-w-xs mb-6 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500">
-//   로그인
-// </button>
-
-// <div className="w-full max-w-xs border-t border-gray-300 my-4"></div>
-
-// {/* 계정 찾기 링크 */}
-// <div className="flex justify-center space-x-4 mb-6 w-full max-w-xs">
-//   <a href="/auth/idinquiry" className="text-sm text-gray-600">
-//     아이디 찾기
-//   </a>
-//   <a href="/aut/pwinquiry" className="text-sm text-gray-600">
-//     비밀번호 찾기
-//   </a>
-// </div>
-
-// <div className="w-full max-w-xs border-t border-gray-300 my-4"></div>
-
-// {/* 소셜 로그인 */}
-// <div className="flex flex-col space-y-3 w-full max-w-xs mb-6">
-//   <button className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500">
-//     Continue with Google
-//   </button>
-//   <button className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500">
-//     Continue with kakao
-//   </button>
-//   <button className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500">
-//     Continue with naver
-//   </button>
-// </div>
-
-// {/* 회원가입 링크 */}
-// <div className="text-center w-full max-w-xs">
-//   <span className="text-sm text-gray-600">계정이 없으신가요? </span>
-//   <a href="/signup" className="text-sm font-semibold underline">
-//     회원가입
-//   </a>
-// </div> */}

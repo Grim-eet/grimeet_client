@@ -7,10 +7,13 @@ export const MainContain = () => {
   return (
     <>
       <main>
+        {/* 배너 */}
         <Hero />
         <div className="mt-12">
+          {/* 특징 */}
           <MainFeature />
         </div>
+        {/* 사용자 행동 유도 */}
         <Cta />
       </main>
     </>

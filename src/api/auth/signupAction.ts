@@ -11,7 +11,7 @@ export default async function signupAction(formData: SignupInput) {
     dataToSend
   );
 
-  const apiUrl = `${process.env.NEXT_SERVER_URL}api/auth/register`;
+  const apiUrl = `${process.env.NEXT_SERVER_URL}/auth/register`;
 
   try {
     const res = await fetch(apiUrl, {
@@ -44,8 +44,8 @@ export default async function signupAction(formData: SignupInput) {
 
     if (res.status === 201) {
       try {
-        const data = JSON.parse(responseBody);
-        console.log('API Success (201 Created) Response:', data);
+        console.log(responseBody);
+        const data = responseBody;
         return data;
       } catch (e) {
         console.error('Failed to parse success response (201):', e);
@@ -54,11 +54,6 @@ export default async function signupAction(formData: SignupInput) {
       console.log(
         `API Success (Status: ${res.status}) Response Body: ${responseBody}`
       );
-      try {
-        return JSON.parse(responseBody);
-      } catch (e) {
-        return responseBody;
-      }
     }
   } catch (error) {
     console.error('Signup action failed:', error);

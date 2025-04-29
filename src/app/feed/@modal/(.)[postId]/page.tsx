@@ -1,4 +1,4 @@
-import {handleOpenComments} from '@/api/feedAction';
+import {handleOpenComments} from '@/api/feed/feedAction';
 import {FeedDetail} from '@/app/components/feed/FeedDetail';
 import {ModalClose} from '@/app/components/feed/modal/ModalClose';
 import {ModalContentWrapper} from '@/app/components/feed/modal/ModalContentWrapper';
