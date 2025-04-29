@@ -10,7 +10,7 @@ export const MainFeature = () => {
             src={'/grie2.jpg'}
             alt="그라데이션2"
             fill
-            className="object-cover"
+            className="object-cover rounded-md"
           />
           <main className="relative z-10 p-4"></main>
         </div>
