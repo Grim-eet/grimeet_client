@@ -83,7 +83,7 @@ interface FormInputProps
     React.InputHTMLAttributes<HTMLInputElement>,
     'value' | 'onChange' | 'name'
   > {
-  name: keyof SignupInput;
+  name: keyof SignupInput | 'verificationCode';
   value: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;

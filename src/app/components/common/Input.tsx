@@ -31,6 +31,8 @@ export const Input: React.FC<InputProps> = ({
       ? '닉네임을 입력하세요'
       : name === 'name'
       ? '이름을 입력하세요'
+      : name === 'verificationCode'
+      ? '인증번호를 입력하세요'
       : '';
 
   return (

@@ -1,11 +1,11 @@
-"use client";
-import { KonvaEventObject } from "konva/lib/Node";
-import { SketchbookTools } from "./tools";
-import { useState, useRef, useEffect, use } from "react";
-import { Stage, Layer, Line, Text } from "react-konva";
-import React from "react";
-import { Socket, io } from "socket.io-client";
-import { throttle } from "lodash";
+'use client';
+import {KonvaEventObject} from 'konva/lib/Node';
+import {SketchbookTools} from './tools';
+import {useState, useRef, useEffect, use} from 'react';
+import {Stage, Layer, Line, Text} from 'react-konva';
+import React from 'react';
+import {Socket, io} from 'socket.io-client';
+import {throttle} from 'lodash';
 
 interface ILine {
   tool: string;
@@ -18,7 +18,7 @@ interface History {
 }
 
 interface BaseEmitData {
-  type: "painting" | "startPaint" | "undo" | "redo";
+  type: 'painting' | 'startPaint' | 'undo' | 'redo';
   tool: string;
   position: {
     x: number;
@@ -26,8 +26,8 @@ interface BaseEmitData {
   };
 }
 
-interface UndoRedoEmitData extends Omit<BaseEmitData, "tool" | "position"> {
-  type: "undo" | "redo";
+interface UndoRedoEmitData extends Omit<BaseEmitData, 'tool' | 'position'> {
+  type: 'undo' | 'redo';
 }
 
 type EmitMouseData = BaseEmitData | UndoRedoEmitData;
@@ -38,7 +38,7 @@ const INIT_HISTORY: History = {
 };
 
 export const Palette = () => {
-  const [tool, setTool] = React.useState("pen");
+  const [tool, setTool] = React.useState('pen');
   const [historyIdx, setHistoryIdx] = useState<number>(0);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -49,18 +49,18 @@ export const Palette = () => {
 
   const emitMessage = async (message: EmitMouseData) => {
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         body: JSON.stringify({
           ...message,
         }),
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
       console.log(response);
     } catch (error) {
-      console.error("Error emitting message:", error);
+      console.error('Error emitting message:', error);
     }
   };
 
@@ -72,7 +72,7 @@ export const Palette = () => {
     if (!point) return;
 
     emitMessage({
-      type: "startPaint",
+      type: 'startPaint',
       tool,
       position: {
         x: point.x,
@@ -87,7 +87,7 @@ export const Palette = () => {
     if (!point) return;
 
     throttleEmitMessage({
-      type: "painting",
+      type: 'painting',
       tool,
       position: {
         x: point.x,
@@ -102,13 +102,13 @@ export const Palette = () => {
 
   const handleUndo = () => {
     emitMessage({
-      type: "undo",
+      type: 'undo',
     });
   };
 
   const handleRedo = () => {
     emitMessage({
-      type: "redo",
+      type: 'redo',
     });
   };
 
@@ -117,10 +117,10 @@ export const Palette = () => {
 
     const socketServer = async () => {
       try {
-        const res = await fetch("/api/socket/io", { method: "GET" });
+        const res = await fetch('/api/socket/io', {method: 'GET'});
 
         if (res.ok) {
-          console.log("소켓 초기화 성공했습니다.");
+          console.log('소켓 초기화 성공했습니다.');
           console.log(res.status);
         }
       } catch (error) {
@@ -130,31 +130,31 @@ export const Palette = () => {
 
     socketServer();
 
-    const socketInstance = io("http://localhost:3000", {
-      path: "/api/socket/io",
+    const socketInstance = io('http://localhost:3000', {
+      path: '/api/socket/io',
       addTrailingSlash: false,
     });
 
-    socketInstance.on("connect", () => {
+    socketInstance.on('connect', () => {
       setIsConnected(true);
     });
 
-    socketInstance.on("disconnect", () => {
+    socketInstance.on('disconnect', () => {
       setIsConnected(false);
     });
 
-    socketInstance.on("connect_error", (err) => {
+    socketInstance.on('connect_error', (err) => {
       console.log(`connect_error due to ${err.message}`);
     });
 
-    socketInstance.on("message", (res) => {
+    socketInstance.on('message', (res) => {
       console.log(res);
       const data = res as EmitMouseData;
 
-      if (data.type === "startPaint") {
+      if (data.type === 'startPaint') {
         setHistory((history) => {
           const lines = history.lines.slice(0, history.currentIdx);
-          console.log("lines", lines);
+          console.log('lines', lines);
           return {
             ...history,
             currentIdx: history.currentIdx + 1,
@@ -174,7 +174,7 @@ export const Palette = () => {
         });
       }
 
-      if (data.type === "painting") {
+      if (data.type === 'painting') {
         setHistory((history) => {
           const lastLine = history.lines[history.lines.length - 1];
           lastLine.points = [
@@ -182,18 +182,18 @@ export const Palette = () => {
             data.position.x,
             data.position.y,
           ];
-          return { ...history, lines: [...history.lines] };
+          return {...history, lines: [...history.lines]};
         });
       }
 
-      if (data.type === "undo") {
+      if (data.type === 'undo') {
         setHistory((history) => ({
           ...history,
           currentIdx: Math.max(0, history.currentIdx - 1),
         }));
       }
 
-      if (data.type === "redo") {
+      if (data.type === 'redo') {
         setHistory((history) => ({
           ...history,
           currentIdx: Math.min(history.lines.length, history.currentIdx + 1),
@@ -211,19 +211,19 @@ export const Palette = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
-        if (e.key.toLowerCase() === "z") {
+        if (e.key.toLowerCase() === 'z') {
           e.preventDefault();
           handleUndo();
-        } else if (e.key.toLowerCase() === "y") {
+        } else if (e.key.toLowerCase() === 'y') {
           e.preventDefault();
           handleRedo();
         }
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -330,7 +330,7 @@ export const Palette = () => {
                 lineCap="round"
                 lineJoin="round"
                 globalCompositeOperation={
-                  line.tool === "eraser" ? "destination-out" : "source-over"
+                  line.tool === 'eraser' ? 'destination-out' : 'source-over'
                 }
               />
             ))}
