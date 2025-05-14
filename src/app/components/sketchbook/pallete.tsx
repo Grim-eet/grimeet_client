@@ -1,17 +1,17 @@
-"use client";
-import { KonvaEventObject } from "konva/lib/Node";
-import { SketchbookTools } from "./tools";
-import { useState, useRef, useEffect, use, useCallback } from "react";
-import { Stage, Layer, Line, Text } from "react-konva";
-import React from "react";
-import { Socket, io } from "socket.io-client";
-import { throttle } from "lodash";
+'use client';
+import {KonvaEventObject} from 'konva/lib/Node';
+import {SketchbookTools} from './tools';
+import {useState, useRef, useEffect, use, useCallback} from 'react';
+import {Stage, Layer, Line, Text} from 'react-konva';
+import React from 'react';
+import {Socket, io} from 'socket.io-client';
+import {throttle} from 'lodash';
 
-import pencil from "../../../../public/images/pencil.png";
-import eraser from "../../../../public/images/eraser.png";
-import brush from "../../../../public/images/brush.png";
-import square from "../../../../public/images/square.png";
-import text from "../../../../public/images/text.png";
+import pencil from '../../../../public/images/pencil.png';
+import eraser from '../../../../public/images/eraser.png';
+import brush from '../../../../public/images/brush.png';
+import square from '../../../../public/images/square.png';
+import text from '../../../../public/images/text.png';
 
 interface ILine {
   tool: string;
@@ -24,7 +24,7 @@ interface History {
 }
 
 interface BaseEmitData {
-  type: "painting" | "startPaint" | "undo" | "redo";
+  type: 'painting' | 'startPaint' | 'undo' | 'redo';
   tool: string;
   position: {
     x: number;
@@ -32,8 +32,8 @@ interface BaseEmitData {
   };
 }
 
-interface UndoRedoEmitData extends Omit<BaseEmitData, "tool" | "position"> {
-  type: "undo" | "redo";
+interface UndoRedoEmitData extends Omit<BaseEmitData, 'tool' | 'position'> {
+  type: 'undo' | 'redo';
 }
 
 type EmitMouseData = BaseEmitData | UndoRedoEmitData;
@@ -43,8 +43,31 @@ const INIT_HISTORY: History = {
   lines: [],
 };
 
+const CURSOR_MAP = {
+  pen: {
+    url: pencil.src,
+    hotspot: [0, 24], // 펜 끝이 클릭 위치
+  },
+  eraser: {
+    url: eraser.src,
+    hotspot: [0, 24], // 지우개 중심이 클릭 위치
+  },
+  brush: {
+    url: brush.src,
+    hotspot: [0, 24], // 브러쉬 중심
+  },
+  square: {
+    url: square.src,
+    hotspot: [0, 24], // 사각형 중심
+  },
+  text: {
+    url: text.src,
+    hotspot: [0, 24], // 텍스트 커서 위치
+  },
+};
+
 export const Palette = () => {
-  const [tool, setTool] = React.useState("pen");
+  const [tool, setTool] = React.useState<keyof typeof CURSOR_MAP>('pen');
   const [historyIdx, setHistoryIdx] = useState<number>(0);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -55,24 +78,24 @@ export const Palette = () => {
 
   const emitMessage = async (message: EmitMouseData) => {
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         body: JSON.stringify({
           ...message,
         }),
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
-      console.log("res", response);
-      console.log("emitMessage", message);
-      console.log("his", history);
+      console.log('res', response);
+      console.log('emitMessage', message);
+      console.log('his', history);
     } catch (error) {
-      console.error("Error emitting message:", error);
+      console.error('Error emitting message:', error);
     }
   };
 
-  const throttleEmitMessage = throttle(emitMessage, 50);
+  const throttleEmitMessage = useCallback(throttle(emitMessage, 16), []);
 
   const handleStartPaint = (e: KonvaEventObject<MouseEvent>) => {
     isPainting.current = true;
@@ -80,7 +103,7 @@ export const Palette = () => {
     if (!point) return;
 
     emitMessage({
-      type: "startPaint",
+      type: 'startPaint',
       tool,
       position: {
         x: point.x,
@@ -95,7 +118,7 @@ export const Palette = () => {
     if (!point) return;
 
     throttleEmitMessage({
-      type: "painting",
+      type: 'painting',
       tool,
       position: {
         x: point.x,
@@ -110,13 +133,13 @@ export const Palette = () => {
 
   const handleUndo = () => {
     emitMessage({
-      type: "undo",
+      type: 'undo',
     });
   };
 
   const handleRedo = () => {
     emitMessage({
-      type: "redo",
+      type: 'redo',
     });
   };
 
@@ -125,10 +148,10 @@ export const Palette = () => {
 
     const socketServer = async () => {
       try {
-        const res = await fetch("/api/socket/io", { method: "GET" });
+        const res = await fetch('/api/socket/io', {method: 'GET'});
 
         if (res.ok) {
-          console.log("소켓 초기화 성공했습니다.");
+          console.log('소켓 초기화 성공했습니다.');
           console.log(res.status);
         }
       } catch (error) {
@@ -138,51 +161,52 @@ export const Palette = () => {
 
     socketServer();
 
-    const socketInstance = io("http://localhost:3000", {
-      path: "/api/socket/io",
-      addTrailingSlash: false,
-    });
+    const initSocket = () => {
+      const socketInstance = io('http://localhost:3000', {
+        path: '/api/socket/io',
+        addTrailingSlash: false,
+      });
 
-    socketInstance.on("connect", () => {
-      setIsConnected(true);
-    });
+      socketInstance.on('connect', () => {
+        setIsConnected(true);
+      });
 
-    socketInstance.on("disconnect", () => {
-      setIsConnected(false);
-    });
+      socketInstance.on('disconnect', () => {
+        setIsConnected(false);
+      });
 
-    socketInstance.on("connect_error", (err) => {
-      console.log(`connect_error due to ${err.message}`);
-    });
+      socketInstance.on('connect_error', (err) => {
+        console.log(`connect_error due to ${err.message}`);
+      });
 
-    socketInstance.on("message", (res) => {
-      console.log(res);
-      const data = res as EmitMouseData;
+      socketInstance.on('message', (res) => {
+        console.log(res);
+        const data = res as EmitMouseData;
 
-      if (data.type === "startPaint") {
-        setHistory((history) => {
-          const lines = history.lines.slice(0, history.currentIdx);
-          console.log("lines", lines);
-          return {
-            ...history,
-            currentIdx: history.currentIdx + 1,
-            lines: [
-              ...lines,
-              {
-                tool: data.tool,
-                points: [
-                  data.position.x,
-                  data.position.y,
-                  data.position.x,
-                  data.position.y,
-                ],
-              },
-            ],
-          };
-        });
-      }
+        if (data.type === 'startPaint') {
+          setHistory((history) => {
+            const lines = history.lines.slice(0, history.currentIdx);
+            console.log('lines', lines);
+            return {
+              ...history,
+              currentIdx: history.currentIdx + 1,
+              lines: [
+                ...lines,
+                {
+                  tool: data.tool,
+                  points: [
+                    data.position.x,
+                    data.position.y,
+                    data.position.x,
+                    data.position.y,
+                  ],
+                },
+              ],
+            };
+          });
+        }
 
-        if (data.type === "painting") {
+        if (data.type === 'painting') {
           setHistory((prevHistory) => {
             if (prevHistory.currentIdx === 0) {
               return prevHistory;
@@ -207,44 +231,48 @@ export const Palette = () => {
           });
         }
 
-        if (data.type === "undo") {
+        if (data.type === 'undo') {
           setHistory((history) => ({
             ...history,
             currentIdx: Math.max(0, history.currentIdx - 1),
           }));
         }
 
-      if (data.type === "redo") {
-        setHistory((history) => ({
-          ...history,
-          currentIdx: Math.min(history.lines.length, history.currentIdx + 1),
-        }));
-      }
-    });
+        if (data.type === 'redo') {
+          setHistory((history) => ({
+            ...history,
+            currentIdx: Math.min(history.lines.length, history.currentIdx + 1),
+          }));
+        }
+      });
 
-    setSocket(socketInstance);
+      setSocket(socketInstance);
+    };
+    initSocket();
 
     return () => {
-      socketInstance.disconnect();
+      if (socket) {
+        socket.disconnect();
+      }
     };
   }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
-        if (e.key.toLowerCase() === "z") {
+        if (e.key.toLowerCase() === 'z') {
           e.preventDefault();
           handleUndo();
-        } else if (e.key.toLowerCase() === "y") {
+        } else if (e.key.toLowerCase() === 'y') {
           e.preventDefault();
           handleRedo();
         }
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -308,10 +336,14 @@ export const Palette = () => {
   //   isPainting.current = false;
   // };
 
+  const handleToolChange = (newTool: string) => {
+    setTool(newTool);
+  };
+
   return (
     <>
       <div className="bg-white flex-1 w-full">
-        <select
+        {/* <select
           value={tool}
           onChange={(e) => {
             setTool(e.target.value);
@@ -320,7 +352,15 @@ export const Palette = () => {
         >
           <option value="pen">Pen</option>
           <option value="eraser">Eraser</option>
-        </select>
+        </select> */}
+        <div className="z-1000">
+          <SketchbookTools
+            currentTool={tool}
+            onToolChange={handleToolChange}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+          />
+        </div>
 
         {/* <button onClick={handleUndo} className="text-black">
           Undo
@@ -338,6 +378,10 @@ export const Palette = () => {
           // onTouchStart={handleMouseDown}
           // onTouchMove={handleMouseMove}
           // onTouchEnd={handleMouseUp}
+          className="z-0"
+          style={{
+            cursor: `url(${CURSOR_MAP[tool].url}) ${CURSOR_MAP[tool].hotspot[0]} ${CURSOR_MAP[tool].hotspot[1]}, auto`,
+          }}
         >
           <Layer>
             <Text text="Just start drawing" x={5} y={30} />
@@ -351,7 +395,7 @@ export const Palette = () => {
                 lineCap="round"
                 lineJoin="round"
                 globalCompositeOperation={
-                  line.tool === "eraser" ? "destination-out" : "source-over"
+                  line.tool === 'eraser' ? 'destination-out' : 'source-over'
                 }
               />
             ))}
@@ -360,3 +404,4 @@ export const Palette = () => {
       </div>
     </>
   );
+};
