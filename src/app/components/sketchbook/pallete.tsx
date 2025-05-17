@@ -336,7 +336,7 @@ export const Palette = () => {
   //   isPainting.current = false;
   // };
 
-  const handleToolChange = (newTool: string) => {
+  const handleToolChange = (newTool: keyof typeof CURSOR_MAP) => {
     setTool(newTool);
   };
 
