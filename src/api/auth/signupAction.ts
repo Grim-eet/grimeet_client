@@ -6,6 +6,8 @@ import {SignupInput} from '@/types/auth';
 export default async function signupAction(formData: SignupInput) {
   const {confirmPassword, ...dataToSend} = formData;
 
+  console.log('confirmPassword:', confirmPassword);
+
   console.log(
     'Data being sent to API (excluding confirmPassword):',
     dataToSend
@@ -36,6 +38,7 @@ export default async function signupAction(formData: SignupInput) {
           errorJson.message || JSON.stringify(errorJson) || responseBody
         }`;
       } catch (e) {
+        console.error('Failed to parse error response:', e);
         errorMessage += `: ${responseBody}`;
       }
       console.error('Detailed Error:', errorMessage);

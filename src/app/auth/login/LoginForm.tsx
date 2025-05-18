@@ -29,7 +29,8 @@ export const LoginFormRoot: React.FC<LoginFormProps> = ({
   );
 };
 
-interface TitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
+type TitleProps = React.HTMLAttributes<HTMLHeadingElement>;
+
 const Title: React.FC<TitleProps> = ({className, children, ...props}) => {
   return (
     <h1
@@ -41,7 +42,8 @@ const Title: React.FC<TitleProps> = ({className, children, ...props}) => {
   );
 };
 
-interface SubtitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
+type SubtitleProps = React.HTMLAttributes<HTMLHeadingElement>;
+
 const Subtitle: React.FC<SubtitleProps> = ({className, children, ...props}) => {
   return (
     <h2
@@ -53,7 +55,8 @@ const Subtitle: React.FC<SubtitleProps> = ({className, children, ...props}) => {
   );
 };
 
-interface InputWrapperProps extends React.HTMLAttributes<HTMLDivElement> {}
+type InputWrapperProps = React.HTMLAttributes<HTMLDivElement>;
+
 const InputWrapper: React.FC<InputWrapperProps> = ({
   className,
   children,
@@ -66,7 +69,8 @@ const InputWrapper: React.FC<InputWrapperProps> = ({
   );
 };
 
-interface DividerProps extends React.HTMLAttributes<HTMLDivElement> {}
+type DividerProps = React.HTMLAttributes<HTMLDivElement>;
+
 const Divider: React.FC<DividerProps> = ({className, ...props}) => {
   return (
     <div
@@ -76,7 +80,8 @@ const Divider: React.FC<DividerProps> = ({className, ...props}) => {
   );
 };
 
-interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {}
+type LinkProps = React.AnchorHTMLAttributes<HTMLAnchorElement>;
+
 const Link: React.FC<LinkProps> = ({className, children, href, ...props}) => {
   return (
     <a
@@ -188,7 +193,8 @@ const Button: React.FC<ButtonProps> = ({
   );
 };
 
-interface LinksContainerProps extends React.HTMLAttributes<HTMLDivElement> {}
+type LinksContainerProps = React.HTMLAttributes<HTMLDivElement>;
+
 const LinksContainer: React.FC<LinksContainerProps> = ({
   className,
   children,
@@ -204,8 +210,8 @@ const LinksContainer: React.FC<LinksContainerProps> = ({
   );
 };
 
-interface SocialLoginContainerProps
-  extends React.HTMLAttributes<HTMLDivElement> {}
+type SocialLoginContainerProps = React.HTMLAttributes<HTMLDivElement>;
+
 const SocialLoginContainer: React.FC<SocialLoginContainerProps> = ({
   className,
   children,
@@ -222,22 +228,28 @@ const SocialLoginContainer: React.FC<SocialLoginContainerProps> = ({
 };
 
 interface SocialButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  isLoading?: boolean;
+}
+
 const SocialButton: React.FC<SocialButtonProps> = ({
   className,
   children,
+  isLoading,
   ...props
 }) => {
   return (
     <button
       type="button"
+      disabled={isLoading}
       className={cn(
         'w-full px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
         className
       )}
       {...props}
     >
-      {children}
+      {isLoading ? '처리 중...' : children}
     </button>
   );
 };

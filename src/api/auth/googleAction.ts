@@ -22,7 +22,9 @@ export default async function googleAction() {
     const data = await res.json();
     const googleAuthURl = data.url;
     return googleAuthURl;
-  } catch (error) {
-    console.error('구글 로그인 중 오류가 발생했습니다.');
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(error.message);
+    }
   }
 }

@@ -61,8 +61,8 @@ interface BaseEmitData {
   };
 }
 
-interface UndoRedoEmitData extends Omit<BaseEmitData, "tool" | "position"> {
-  type: "undo" | "redo";
+interface UndoRedoEmitData extends Omit<BaseEmitData, 'tool' | 'position'> {
+  type: 'undo' | 'redo';
 }
 
 type EmitMouseData = BaseEmitData | UndoRedoEmitData;
@@ -96,6 +96,7 @@ const CURSOR_MAP = {
 };
 
 export const Palette = () => {
+
   const [tool, setTool] = React.useState<keyof typeof CURSOR_MAP>("pen");
   const [color, setColor] = useState("#df4b26");
   const [strokeWidth, setStrokeWidth] = useState(5);
@@ -122,11 +123,11 @@ export const Palette = () => {
         method: "POST",
         body: JSON.stringify(message),
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
     } catch (error) {
-      console.error("Error emitting message:", error);
+      console.error('Error emitting message:', error);
     }
   };
 
@@ -161,7 +162,7 @@ export const Palette = () => {
     };
 
     emitMessage({
-      type: "startPaint",
+      type: 'startPaint',
       tool,
       position: point,
       color,
@@ -187,7 +188,7 @@ export const Palette = () => {
     }
 
     throttleEmitMessage({
-      type: "painting",
+      type: 'painting',
       tool,
       position: point,
       color,
@@ -257,7 +258,6 @@ export const Palette = () => {
     };
 
     socketServer();
-
     const initSocket = () => {
       const socketInstance = io("http://localhost:3000", {
         path: "/api/socket/io",
@@ -405,10 +405,10 @@ export const Palette = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
-        if (e.key.toLowerCase() === "z") {
+        if (e.key.toLowerCase() === 'z') {
           e.preventDefault();
           handleUndo();
-        } else if (e.key.toLowerCase() === "y") {
+        } else if (e.key.toLowerCase() === 'y') {
           e.preventDefault();
           handleRedo();
         }
@@ -419,10 +419,10 @@ export const Palette = () => {
         setTextInput("");
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isTextInputVisible, textInput]);
+
 
   if (!isConnected) {
     return (
