@@ -1,8 +1,8 @@
 "use client";
 import { KonvaEventObject } from "konva/lib/Node";
 import { SketchbookTools } from "./tools";
-import { useState, useRef, useEffect, use, useCallback } from "react";
-import { Stage, Layer, Line, Text } from "react-konva";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Stage, Layer, Line, Text as KonvaText, Rect } from "react-konva";
 import React from "react";
 import { Socket, io } from "socket.io-client";
 import { throttle } from "lodash";
@@ -16,19 +16,48 @@ import text from "../../../../public/images/text.png";
 interface ILine {
   tool: string;
   points: Array<number>;
+  color?: string;
+  strokeWidth?: number;
+}
+
+interface IText {
+  tool: string;
+  text: string;
+  x: number;
+  y: number;
+  color?: string;
+  fontSize?: number;
+}
+
+interface IRect {
+  tool: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color?: string;
+  strokeWidth?: number;
 }
 
 interface History {
   currentIdx: number;
-  lines: Array<ILine>;
+  elements: Array<ILine | IText | IRect>;
 }
 
 interface BaseEmitData {
-  type: 'painting' | 'startPaint' | 'undo' | 'redo';
+  type: "painting" | "startPaint" | "undo" | "redo" | "addText" | "addRect";
   tool: string;
   position: {
     x: number;
     y: number;
+  };
+  color?: string;
+  strokeWidth?: number;
+  text?: string;
+  fontSize?: number;
+  dimensions?: {
+    width: number;
+    height: number;
   };
 }
 
@@ -40,57 +69,63 @@ type EmitMouseData = BaseEmitData | UndoRedoEmitData;
 
 const INIT_HISTORY: History = {
   currentIdx: 0,
-  lines: [],
+  elements: [],
 };
 
 const CURSOR_MAP = {
   pen: {
     url: pencil.src,
-    hotspot: [0, 24], // 펜 끝이 클릭 위치
+    hotspot: [0, 24],
   },
   eraser: {
     url: eraser.src,
-    hotspot: [0, 24], // 지우개 중심이 클릭 위치
+    hotspot: [0, 24],
   },
   brush: {
     url: brush.src,
-    hotspot: [0, 24], // 브러쉬 중심
+    hotspot: [0, 24],
   },
   square: {
     url: square.src,
-    hotspot: [0, 24], // 사각형 중심
+    hotspot: [0, 24],
   },
   text: {
     url: text.src,
-    hotspot: [0, 24], // 텍스트 커서 위치
+    hotspot: [0, 24],
   },
 };
 
 export const Palette = () => {
 
   const [tool, setTool] = React.useState<keyof typeof CURSOR_MAP>("pen");
-  const [historyIdx, setHistoryIdx] = useState<number>(0);
+  const [color, setColor] = useState("#df4b26");
+  const [strokeWidth, setStrokeWidth] = useState(5);
+  const [brushPressure, setBrushPressure] = useState(0.5);
+  const [textInput, setTextInput] = useState("");
+  const [fontSize, setFontSize] = useState(16);
+  const [isTextInputVisible, setIsTextInputVisible] = useState(false);
+  const [textPosition, setTextPosition] = useState({ x: 0, y: 0 });
+  const [rectStart, setRectStart] = useState<{ x: number; y: number } | null>(
+    null
+  );
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [history, setHistory] = useState<History>(INIT_HISTORY);
 
-  const lines = history.lines.slice(0, history.currentIdx);
+  const elements = history.elements.slice(0, history.currentIdx);
   const isPainting = React.useRef(false);
+  const stageRef = useRef<any>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
 
   const emitMessage = async (message: EmitMouseData) => {
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        body: JSON.stringify({
-          ...message,
-        }),
+      await fetch("/api/chat", {
+        method: "POST",
+        body: JSON.stringify(message),
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      console.log("res", response);
-      console.log("emitMessage", message);
-      console.log("his", history);
     } catch (error) {
       console.error('Error emitting message:', error);
     }
@@ -99,62 +134,124 @@ export const Palette = () => {
   const throttleEmitMessage = useCallback(throttle(emitMessage, 16), []);
 
   const handleStartPaint = (e: KonvaEventObject<MouseEvent>) => {
-    isPainting.current = true;
-    const point = e.target.getStage()?.getPointerPosition();
+    const stage = e.target.getStage();
+    const point = stage?.getPointerPosition();
     if (!point) return;
+
+    if (tool === "text") {
+      setIsTextInputVisible(true);
+      setTextPosition(point);
+      if (textInputRef.current) {
+        textInputRef.current.focus();
+      }
+      return;
+    }
+
+    if (tool === "square") {
+      setRectStart(point);
+      return;
+    }
+
+    isPainting.current = true;
+
+    const element: ILine = {
+      tool,
+      points: [point.x, point.y, point.x, point.y],
+      color: tool === "eraser" ? undefined : color,
+      strokeWidth: tool === "brush" ? strokeWidth * brushPressure : strokeWidth,
+    };
 
     emitMessage({
       type: 'startPaint',
       tool,
-      position: {
-        x: point.x,
-        y: point.y,
-      },
+      position: point,
+      color,
+      strokeWidth,
     });
   };
 
   const handlePainting = (e: KonvaEventObject<MouseEvent>) => {
-    if (!isPainting.current) return;
-    const point = e.target.getStage()?.getPointerPosition();
+    if (
+      !isPainting.current ||
+      (tool !== "pen" && tool !== "brush" && tool !== "eraser")
+    )
+      return;
+
+    const stage = e.target.getStage();
+    const point = stage?.getPointerPosition();
     if (!point) return;
+
+    // Brush pressure simulation
+    if (tool === "brush") {
+      const newPressure = Math.min(1, brushPressure + 0.05);
+      setBrushPressure(newPressure);
+    }
 
     throttleEmitMessage({
       type: 'painting',
       tool,
-      position: {
-        x: point.x,
-        y: point.y,
-      },
+      position: point,
+      color,
+      strokeWidth: tool === "brush" ? strokeWidth * brushPressure : strokeWidth,
     });
   };
 
   const handleStopPaint = () => {
     isPainting.current = false;
+    setBrushPressure(0.5); // Reset brush pressure
+
+    if (tool === "square" && rectStart) {
+      const stage = stageRef.current;
+      const point = stage?.getPointerPosition();
+      if (!point) return;
+
+      const width = point.x - rectStart.x;
+      const height = point.y - rectStart.y;
+
+      emitMessage({
+        type: "addRect",
+        tool,
+        position: rectStart,
+        dimensions: { width, height },
+        color,
+        strokeWidth,
+      });
+
+      setRectStart(null);
+    }
+  };
+
+  const handleTextSubmit = () => {
+    if (!textInput.trim()) {
+      setIsTextInputVisible(false);
+      return;
+    }
+
+    emitMessage({
+      type: "addText",
+      tool: "text",
+      position: textPosition,
+      text: textInput,
+      color,
+      fontSize,
+    });
+
+    setTextInput("");
+    setIsTextInputVisible(false);
   };
 
   const handleUndo = () => {
-    emitMessage({
-      type: 'undo',
-    });
+    emitMessage({ type: "undo" });
   };
 
   const handleRedo = () => {
-    emitMessage({
-      type: 'redo',
-    });
+    emitMessage({ type: "redo" });
   };
 
   useEffect(() => {
-    // Socket.IO 초기화 요청
-
     const socketServer = async () => {
       try {
-        const res = await fetch('/api/socket/io', {method: 'GET'});
-
-        if (res.ok) {
-          console.log('소켓 초기화 성공했습니다.');
-          console.log(res.status);
-        }
+        await fetch("/api/socket/io", { method: "GET" });
       } catch (error) {
         console.error(error);
       }
@@ -167,31 +264,23 @@ export const Palette = () => {
         addTrailingSlash: false,
       });
 
-      socketInstance.on("connect", () => {
-        setIsConnected(true);
-      });
-
-      socketInstance.on("disconnect", () => {
-        setIsConnected(false);
-      });
-
-      socketInstance.on("connect_error", (err) => {
-        console.log(`connect_error due to ${err.message}`);
-      });
+      socketInstance.on("connect", () => setIsConnected(true));
+      socketInstance.on("disconnect", () => setIsConnected(false));
+      socketInstance.on("connect_error", (err) =>
+        console.log(`connect_error due to ${err.message}`)
+      );
 
       socketInstance.on("message", (res) => {
-        console.log(res);
         const data = res as EmitMouseData;
 
         if (data.type === "startPaint") {
           setHistory((history) => {
-            const lines = history.lines.slice(0, history.currentIdx);
-            console.log("lines", lines);
+            const elements = history.elements.slice(0, history.currentIdx);
             return {
               ...history,
               currentIdx: history.currentIdx + 1,
-              lines: [
-                ...lines,
+              elements: [
+                ...elements,
                 {
                   tool: data.tool,
                   points: [
@@ -200,6 +289,8 @@ export const Palette = () => {
                     data.position.x,
                     data.position.y,
                   ],
+                  color: data.color,
+                  strokeWidth: data.strokeWidth,
                 },
               ],
             };
@@ -208,27 +299,78 @@ export const Palette = () => {
 
         if (data.type === "painting") {
           setHistory((prevHistory) => {
-            if (prevHistory.currentIdx === 0) {
+            if (prevHistory.currentIdx === 0) return prevHistory;
+
+            const elementIndexToUpdate = prevHistory.currentIdx - 1;
+            const lastElement = prevHistory.elements[elementIndexToUpdate];
+
+            if (
+              lastElement.tool !== "pen" &&
+              lastElement.tool !== "brush" &&
+              lastElement.tool !== "eraser"
+            ) {
               return prevHistory;
             }
 
-            const lineIndexToUpdate = prevHistory.currentIdx - 1;
-
-            const updatedLines = prevHistory.lines.map((line, index) => {
-              if (index === lineIndexToUpdate) {
-                return {
-                  ...line,
-                  points: [...line.points, data.position.x, data.position.y],
-                };
+            const updatedElements = prevHistory.elements.map(
+              (element, index) => {
+                if (index === elementIndexToUpdate) {
+                  return {
+                    ...element,
+                    points: [
+                      ...(element as ILine).points,
+                      data.position.x,
+                      data.position.y,
+                    ],
+                    strokeWidth: data.strokeWidth,
+                  };
+                }
+                return element;
               }
-              return line;
-            });
+            );
 
             return {
               ...prevHistory,
-              lines: updatedLines,
+              elements: updatedElements,
             };
           });
+        }
+
+        if (data.type === "addText") {
+          setHistory((history) => ({
+            ...history,
+            currentIdx: history.currentIdx + 1,
+            elements: [
+              ...history.elements.slice(0, history.currentIdx),
+              {
+                tool: "text",
+                text: data.text || "",
+                x: data.position.x,
+                y: data.position.y,
+                color: data.color,
+                fontSize: data.fontSize,
+              },
+            ],
+          }));
+        }
+
+        if (data.type === "addRect") {
+          setHistory((history) => ({
+            ...history,
+            currentIdx: history.currentIdx + 1,
+            elements: [
+              ...history.elements.slice(0, history.currentIdx),
+              {
+                tool: "square",
+                x: data.position.x,
+                y: data.position.y,
+                width: data.dimensions?.width || 0,
+                height: data.dimensions?.height || 0,
+                color: data.color,
+                strokeWidth: data.strokeWidth,
+              },
+            ],
+          }));
         }
 
         if (data.type === "undo") {
@@ -241,19 +383,22 @@ export const Palette = () => {
         if (data.type === "redo") {
           setHistory((history) => ({
             ...history,
-            currentIdx: Math.min(history.lines.length, history.currentIdx + 1),
+            currentIdx: Math.min(
+              history.elements.length,
+              history.currentIdx + 1
+            ),
           }));
         }
       });
 
       setSocket(socketInstance);
     };
+
     initSocket();
 
     return () => {
-      if (socket) {
-        socket.disconnect();
-      }
+      if (socket) socket.disconnect();
+      throttleEmitMessage.cancel();
     };
   }, []);
 
@@ -267,74 +412,25 @@ export const Palette = () => {
           e.preventDefault();
           handleRedo();
         }
+      } else if (e.key === "Enter" && isTextInputVisible) {
+        handleTextSubmit();
+      } else if (e.key === "Escape" && isTextInputVisible) {
+        setIsTextInputVisible(false);
+        setTextInput("");
       }
     };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isTextInputVisible, textInput]);
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
 
-  useEffect(() => {
-    return () => {
-      throttleEmitMessage.cancel(); // throttle cleanup
-    };
-  }, []);
-
-  // 연결 상태 표시
   if (!isConnected) {
-    return <div>Connecting to server...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Connecting to server...
+      </div>
+    );
   }
-
-  // if (!isConnected) {
-  //   return (
-  //     <div className="flex justify-center items-center h-screen">
-  //       Connecting to server...
-  //     </div>
-  //   );
-  // }
-
-  // const historylines = lines.slice(0, historyIdx);
-
-  // const handleUndo = () => {
-  //   if (historyIdx === 0) {
-  //     return;
-  //   }
-  //   setHistoryIdx(historyIdx - 1);
-  // };
-  // const handleRedo = () => {
-  //   if (historyIdx === lines.length) {
-  //     return;
-  //   }
-  //   setHistoryIdx(historyIdx + 1);
-  // };
-
-  // const handleMouseDown = (e) => {
-  //   isPainting.current = true;
-  //   const pos = e.target.getStage().getPointerPosition();
-  //   setLines([...lines, { tool, points: [pos.x, pos.y] }]);
-  // };
-
-  // const handleMouseMove = (e) => {
-  //   // no drawing - skipping
-  //   if (!isPainting.current) {
-  //     return;
-  //   }
-  //   const stage = e.target.getStage();
-  //   const point = stage.getPointerPosition();
-  //   let lastLine = lines[lines.length - 1];
-  //   // add point
-  //   lastLine.points = lastLine.points.concat([point.x, point.y]);
-
-  //   // replace last
-  //   lines.splice(lines.length - 1, 1, lastLine);
-  //   setLines(lines.concat());
-  // };
-
-  // const handleMouseUp = () => {
-  //   isPainting.current = false;
-  // };
 
   const handleToolChange = (newTool: keyof typeof CURSOR_MAP) => {
     setTool(newTool);
@@ -342,63 +438,122 @@ export const Palette = () => {
 
   return (
     <>
-      <div className="bg-white flex-1 w-full">
-        {/* <select
-          value={tool}
-          onChange={(e) => {
-            setTool(e.target.value);
-          }}
-          className="text-black"
-        >
-          <option value="pen">Pen</option>
-          <option value="eraser">Eraser</option>
-        </select> */}
-        <div className="z-1000">
-          <SketchbookTools
-            currentTool={tool}
-            onToolChange={handleToolChange}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
-          />
-        </div>
+      <div className="bg-white flex-1 w-full relative">
+        <SketchbookTools
+          currentTool={tool}
+          onToolChange={handleToolChange}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          color={color}
+          onColorChange={setColor}
+          strokeWidth={strokeWidth}
+          onStrokeWidthChange={setStrokeWidth}
+          fontSize={fontSize}
+          onFontSizeChange={setFontSize}
+        />
 
-        {/* <button onClick={handleUndo} className="text-black">
-          Undo
-        </button>
-        <button onClick={handleRedo} className="text-black">
-          Redo
-        </button> */}
+        {isTextInputVisible && (
+          <div
+            className="absolute z-50"
+            style={{
+              left: `${textPosition.x}px`,
+              top: `${textPosition.y}px`,
+              transform: "translate(10px, 10px)",
+            }}
+          >
+            <input
+              ref={textInputRef}
+              type="text"
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              onBlur={handleTextSubmit}
+              className="p-2 border rounded shadow-lg"
+              style={{
+                color,
+                fontSize: `${fontSize}px`,
+              }}
+              autoFocus
+            />
+          </div>
+        )}
+
         <Stage
+          ref={stageRef}
           width={window.innerWidth}
           height={window.innerHeight}
           onMouseDown={handleStartPaint}
-          onMousemove={handlePainting}
-          onMouseup={handleStopPaint}
+          onMouseMove={handlePainting}
+          onMouseUp={handleStopPaint}
           onMouseLeave={handleStopPaint}
-          // onTouchStart={handleMouseDown}
-          // onTouchMove={handleMouseMove}
-          // onTouchEnd={handleMouseUp}
           className="z-0"
           style={{
             cursor: `url(${CURSOR_MAP[tool].url}) ${CURSOR_MAP[tool].hotspot[0]} ${CURSOR_MAP[tool].hotspot[1]}, auto`,
           }}
         >
           <Layer>
-            <Text text="Just start drawing" x={5} y={30} />
-            {lines.map((line, i) => (
-              <Line
-                key={i}
-                points={line.points}
-                stroke="#df4b26"
-                strokeWidth={5}
-                tension={0.5}
-                lineCap="round"
-                lineJoin="round"
-                globalCompositeOperation={
-                  line.tool === 'eraser' ? 'destination-out' : 'source-over'
+            {elements.map((element, i) => {
+              if (
+                element.tool === "pen" ||
+                element.tool === "brush" ||
+                element.tool === "eraser"
+              ) {
+                return (
+                  <Line
+                    key={`line-${i}`}
+                    points={element.points}
+                    stroke={element.color}
+                    strokeWidth={element.strokeWidth}
+                    tension={element.tool === "brush" ? 0.5 : 0}
+                    lineCap="round"
+                    lineJoin="round"
+                    globalCompositeOperation={
+                      element.tool === "eraser"
+                        ? "destination-out"
+                        : "source-over"
+                    }
+                  />
+                );
+              } else if (element.tool === "text") {
+                return (
+                  <KonvaText
+                    key={`text-${i}`}
+                    text={element.text}
+                    x={element.x}
+                    y={element.y}
+                    fontSize={element.fontSize}
+                    fill={element.color}
+                  />
+                );
+              } else if (element.tool === "square") {
+                return (
+                  <Rect
+                    key={`rect-${i}`}
+                    x={element.x}
+                    y={element.y}
+                    width={element.width}
+                    height={element.height}
+                    stroke={element.color}
+                    strokeWidth={element.strokeWidth}
+                  />
+                );
+              }
+              return null;
+            })}
+            {rectStart && tool === "square" && (
+              <Rect
+                x={rectStart.x}
+                y={rectStart.y}
+                width={
+                  (stageRef.current?.getPointerPosition()?.x || 0) - rectStart.x
                 }
+                height={
+                  (stageRef.current?.getPointerPosition()?.y || 0) - rectStart.y
+                }
+                stroke={color}
+                strokeWidth={strokeWidth}
+                dash={[5, 5]}
               />
-            ))}
+            )}
           </Layer>
         </Stage>
       </div>
