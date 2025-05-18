@@ -29,7 +29,8 @@ const SignupFormRoot: React.FC<SignupFormProps> = ({
   );
 };
 
-interface TitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
+type TitleProps = React.HTMLAttributes<HTMLHeadingElement>;
+
 const Title: React.FC<TitleProps> = ({className, children, ...props}) => (
   <h1
     className={cn('font-bold text-2xl mb-2 text-center', className)}
@@ -39,7 +40,8 @@ const Title: React.FC<TitleProps> = ({className, children, ...props}) => (
   </h1>
 );
 
-interface SubtitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
+type SubtitleProps = React.HTMLAttributes<HTMLHeadingElement>;
+
 const Subtitle: React.FC<SubtitleProps> = ({className, children, ...props}) => (
   <h2
     className={cn('font-bold text-xl mb-6 text-center', className)}
@@ -49,7 +51,8 @@ const Subtitle: React.FC<SubtitleProps> = ({className, children, ...props}) => (
   </h2>
 );
 
-interface InputWrapperProps extends React.HTMLAttributes<HTMLDivElement> {}
+type InputWrapperProps = React.HTMLAttributes<HTMLDivElement>;
+
 const InputWrapper: React.FC<InputWrapperProps> = ({
   className,
   children,
@@ -60,7 +63,8 @@ const InputWrapper: React.FC<InputWrapperProps> = ({
   </div>
 );
 
-interface DividerProps extends React.HTMLAttributes<HTMLDivElement> {}
+type DividerProps = React.HTMLAttributes<HTMLDivElement>;
+
 const Divider: React.FC<DividerProps> = ({className, ...props}) => (
   <div
     className={cn('w-full border-t border-gray-300 my-4', className)}
@@ -68,7 +72,8 @@ const Divider: React.FC<DividerProps> = ({className, ...props}) => (
   ></div>
 );
 
-interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {}
+type LinkProps = React.AnchorHTMLAttributes<HTMLAnchorElement>;
+
 const Link: React.FC<LinkProps> = ({className, children, ...props}) => (
   <a
     className={cn('text-sm text-gray-600 hover:underline', className)}
@@ -83,10 +88,11 @@ interface FormInputProps
     React.InputHTMLAttributes<HTMLInputElement>,
     'value' | 'onChange' | 'name'
   > {
-  name: keyof SignupInput;
+  name: keyof SignupInput | 'verificationCode';
   value: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
+  className?: string;
 }
 
 const FormInput: React.FC<FormInputProps> = ({
@@ -108,6 +114,7 @@ const FormInput: React.FC<FormInputProps> = ({
         type={type}
         placeholder={placeholder}
         maxLength={maxLength}
+        className={className}
         {...rest}
         aria-invalid={error ? 'true' : 'false'}
       />

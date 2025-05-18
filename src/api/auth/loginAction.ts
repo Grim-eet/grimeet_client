@@ -16,6 +16,8 @@ async function authenticateUser(formData: LoginInput): Promise<{
 }> {
   const {autoLogin, ...dataToSend} = formData;
 
+  console.log('autoLogin:', autoLogin);
+
   console.log('API 요청 데이터:', dataToSend);
   try {
     const res = await fetch(`${process.env.NEXT_SERVER_URL}/auth/login`, {

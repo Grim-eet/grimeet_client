@@ -2,11 +2,14 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  optimizeFonts: true,
+  // optimizeFonts: true,
   webpack: (config) => {
-    config.externals = [...config.externals, { canvas: "canvas" }];
+    config.externals = [...config.externals, {canvas: 'canvas'}];
     return config;
   },
 };
 
-export default nextConfig;
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+module.exports = withBundleAnalyzer(nextConfig);
