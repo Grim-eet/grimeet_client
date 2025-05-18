@@ -114,12 +114,17 @@ export default function Login() {
 
       if (!googleAuthURl) {
         console.error('구글 로그인 URL을 받지 못했습니다.');
+        setGoogleError(
+          '구글 로그인 설정에 문제가 있습니다. 잠시 후 다시 시도해 주세요.'
+        );
         setIsGoogleLoading(false);
         return;
       }
       window.location.href = googleAuthURl;
     } catch (error) {
-      console.error('구글 로그인에대해 실패 했습니다.');
+      console.error('구글 로그인에 대해 실패 했습니다.', error);
+      setGoogleError('구글 로그인 중 오류가 발생했습니다. 다시 시도해 주세요.');
+      setIsGoogleLoading(false);
     }
   };
 
@@ -141,9 +146,9 @@ export default function Login() {
 
       {/* 오른쪽: 로그인 폼 영역 */}
       <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-8">
-        <LoginForm onSubmit={handleSubmit}>
-          <LoginForm.Title></LoginForm.Title>
-          <LoginForm.Subtitle></LoginForm.Subtitle>
+        <LoginForm onSubmit={handleSubmit} error={formError}>
+          <LoginForm.Title>로그인</LoginForm.Title>
+          <LoginForm.Subtitle>계정에 로그인하세요</LoginForm.Subtitle>
           <LoginForm.InputWrapper>
             <LoginForm.Input
               name="email"
@@ -169,7 +174,7 @@ export default function Login() {
           <LoginForm.Checkbox
             name="autoLogin"
             label="자동 로그인"
-            checked={formData.autoLogin || false} // checked 상태 전달
+            checked={formData.autoLogin || false}
             onChange={handleChange}
           />
 
@@ -182,14 +187,15 @@ export default function Login() {
             <LoginForm.Link href="/auth/pwinquiry">
               비밀번호 찾기
             </LoginForm.Link>
-            {/* 경로 수정 */}
           </LoginForm.LinksContainer>
 
           <LoginForm.Divider />
 
           <LoginForm.SocialLoginContainer>
-            {/* 소셜 로그인 버튼 클릭 핸들러 추가 필요 */}
-            <LoginForm.SocialButton onClick={handleGoogleLogin}>
+            <LoginForm.SocialButton
+              onClick={handleGoogleLogin}
+              isLoading={isGoogleLoading}
+            >
               Continue with Google
             </LoginForm.SocialButton>
             <LoginForm.SocialButton onClick={() => console.log('Kakao Login')}>
@@ -198,6 +204,11 @@ export default function Login() {
             <LoginForm.SocialButton onClick={() => console.log('Naver Login')}>
               Continue with naver
             </LoginForm.SocialButton>
+            {googleError && (
+              <p className="mt-2 text-sm text-red-600 text-center w-full">
+                {googleError}
+              </p>
+            )}
           </LoginForm.SocialLoginContainer>
 
           <LoginForm.SignUpPrompt signupHref="/signup" />

@@ -24,7 +24,7 @@ interface History {
 }
 
 interface BaseEmitData {
-  type: "painting" | "startPaint" | "undo" | "redo";
+  type: 'painting' | 'startPaint' | 'undo' | 'redo';
   tool: string;
   position: {
     x: number;
@@ -32,8 +32,8 @@ interface BaseEmitData {
   };
 }
 
-interface UndoRedoEmitData extends Omit<BaseEmitData, "tool" | "position"> {
-  type: "undo" | "redo";
+interface UndoRedoEmitData extends Omit<BaseEmitData, 'tool' | 'position'> {
+  type: 'undo' | 'redo';
 }
 
 type EmitMouseData = BaseEmitData | UndoRedoEmitData;
@@ -67,6 +67,7 @@ const CURSOR_MAP = {
 };
 
 export const Palette = () => {
+
   const [tool, setTool] = React.useState<keyof typeof CURSOR_MAP>("pen");
   const [historyIdx, setHistoryIdx] = useState<number>(0);
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -78,20 +79,20 @@ export const Palette = () => {
 
   const emitMessage = async (message: EmitMouseData) => {
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         body: JSON.stringify({
           ...message,
         }),
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
       console.log("res", response);
       console.log("emitMessage", message);
       console.log("his", history);
     } catch (error) {
-      console.error("Error emitting message:", error);
+      console.error('Error emitting message:', error);
     }
   };
 
@@ -103,7 +104,7 @@ export const Palette = () => {
     if (!point) return;
 
     emitMessage({
-      type: "startPaint",
+      type: 'startPaint',
       tool,
       position: {
         x: point.x,
@@ -118,7 +119,7 @@ export const Palette = () => {
     if (!point) return;
 
     throttleEmitMessage({
-      type: "painting",
+      type: 'painting',
       tool,
       position: {
         x: point.x,
@@ -133,13 +134,13 @@ export const Palette = () => {
 
   const handleUndo = () => {
     emitMessage({
-      type: "undo",
+      type: 'undo',
     });
   };
 
   const handleRedo = () => {
     emitMessage({
-      type: "redo",
+      type: 'redo',
     });
   };
 
@@ -148,10 +149,10 @@ export const Palette = () => {
 
     const socketServer = async () => {
       try {
-        const res = await fetch("/api/socket/io", { method: "GET" });
+        const res = await fetch('/api/socket/io', {method: 'GET'});
 
         if (res.ok) {
-          console.log("소켓 초기화 성공했습니다.");
+          console.log('소켓 초기화 성공했습니다.');
           console.log(res.status);
         }
       } catch (error) {
@@ -160,7 +161,6 @@ export const Palette = () => {
     };
 
     socketServer();
-
     const initSocket = () => {
       const socketInstance = io("http://localhost:3000", {
         path: "/api/socket/io",
@@ -260,19 +260,19 @@ export const Palette = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
-        if (e.key.toLowerCase() === "z") {
+        if (e.key.toLowerCase() === 'z') {
           e.preventDefault();
           handleUndo();
-        } else if (e.key.toLowerCase() === "y") {
+        } else if (e.key.toLowerCase() === 'y') {
           e.preventDefault();
           handleRedo();
         }
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -395,7 +395,7 @@ export const Palette = () => {
                 lineCap="round"
                 lineJoin="round"
                 globalCompositeOperation={
-                  line.tool === "eraser" ? "destination-out" : "source-over"
+                  line.tool === 'eraser' ? 'destination-out' : 'source-over'
                 }
               />
             ))}
