@@ -1,17 +1,17 @@
-"use client";
-import { KonvaEventObject } from "konva/lib/Node";
-import { SketchbookTools } from "./tools";
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Stage, Layer, Line, Text as KonvaText, Rect } from "react-konva";
-import React from "react";
-import { Socket, io } from "socket.io-client";
-import { throttle } from "lodash";
+'use client';
+import {KonvaEventObject} from 'konva/lib/Node';
+import {SketchbookTools} from './tools';
+import {useState, useRef, useEffect, useCallback} from 'react';
+import {Stage, Layer, Line, Text as KonvaText, Rect} from 'react-konva';
+import React from 'react';
+import {Socket, io} from 'socket.io-client';
+import {throttle} from 'lodash';
 
-import pencil from "../../../../public/images/pencil.png";
-import eraser from "../../../../public/images/eraser.png";
-import brush from "../../../../public/images/brush.png";
-import square from "../../../../public/images/square.png";
-import text from "../../../../public/images/text.png";
+import pencil from '../../../../public/images/pencil.png';
+import eraser from '../../../../public/images/eraser.png';
+import brush from '../../../../public/images/brush.png';
+import square from '../../../../public/images/square.png';
+import text from '../../../../public/images/text.png';
 
 interface ILine {
   tool: string;
@@ -45,7 +45,7 @@ interface History {
 }
 
 interface BaseEmitData {
-  type: "painting" | "startPaint" | "undo" | "redo" | "addText" | "addRect";
+  type: 'painting' | 'startPaint' | 'undo' | 'redo' | 'addText' | 'addRect';
   tool: string;
   position: {
     x: number;
@@ -96,16 +96,15 @@ const CURSOR_MAP = {
 };
 
 export const Palette = () => {
-
-  const [tool, setTool] = React.useState<keyof typeof CURSOR_MAP>("pen");
-  const [color, setColor] = useState("#df4b26");
+  const [tool, setTool] = React.useState<keyof typeof CURSOR_MAP>('pen');
+  const [color, setColor] = useState('#df4b26');
   const [strokeWidth, setStrokeWidth] = useState(5);
   const [brushPressure, setBrushPressure] = useState(0.5);
-  const [textInput, setTextInput] = useState("");
+  const [textInput, setTextInput] = useState('');
   const [fontSize, setFontSize] = useState(16);
   const [isTextInputVisible, setIsTextInputVisible] = useState(false);
-  const [textPosition, setTextPosition] = useState({ x: 0, y: 0 });
-  const [rectStart, setRectStart] = useState<{ x: number; y: number } | null>(
+  const [textPosition, setTextPosition] = useState({x: 0, y: 0});
+  const [rectStart, setRectStart] = useState<{x: number; y: number} | null>(
     null
   );
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -119,8 +118,8 @@ export const Palette = () => {
 
   const emitMessage = async (message: EmitMouseData) => {
     try {
-      await fetch("/api/chat", {
-        method: "POST",
+      await fetch('/api/chat', {
+        method: 'POST',
         body: JSON.stringify(message),
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +137,7 @@ export const Palette = () => {
     const point = stage?.getPointerPosition();
     if (!point) return;
 
-    if (tool === "text") {
+    if (tool === 'text') {
       setIsTextInputVisible(true);
       setTextPosition(point);
       if (textInputRef.current) {
@@ -147,7 +146,7 @@ export const Palette = () => {
       return;
     }
 
-    if (tool === "square") {
+    if (tool === 'square') {
       setRectStart(point);
       return;
     }
@@ -157,8 +156,8 @@ export const Palette = () => {
     const element: ILine = {
       tool,
       points: [point.x, point.y, point.x, point.y],
-      color: tool === "eraser" ? undefined : color,
-      strokeWidth: tool === "brush" ? strokeWidth * brushPressure : strokeWidth,
+      color: tool === 'eraser' ? undefined : color,
+      strokeWidth: tool === 'brush' ? strokeWidth * brushPressure : strokeWidth,
     };
 
     emitMessage({
@@ -173,7 +172,7 @@ export const Palette = () => {
   const handlePainting = (e: KonvaEventObject<MouseEvent>) => {
     if (
       !isPainting.current ||
-      (tool !== "pen" && tool !== "brush" && tool !== "eraser")
+      (tool !== 'pen' && tool !== 'brush' && tool !== 'eraser')
     )
       return;
 
@@ -182,7 +181,7 @@ export const Palette = () => {
     if (!point) return;
 
     // Brush pressure simulation
-    if (tool === "brush") {
+    if (tool === 'brush') {
       const newPressure = Math.min(1, brushPressure + 0.05);
       setBrushPressure(newPressure);
     }
@@ -192,7 +191,7 @@ export const Palette = () => {
       tool,
       position: point,
       color,
-      strokeWidth: tool === "brush" ? strokeWidth * brushPressure : strokeWidth,
+      strokeWidth: tool === 'brush' ? strokeWidth * brushPressure : strokeWidth,
     });
   };
 
@@ -200,7 +199,7 @@ export const Palette = () => {
     isPainting.current = false;
     setBrushPressure(0.5); // Reset brush pressure
 
-    if (tool === "square" && rectStart) {
+    if (tool === 'square' && rectStart) {
       const stage = stageRef.current;
       const point = stage?.getPointerPosition();
       if (!point) return;
@@ -209,10 +208,10 @@ export const Palette = () => {
       const height = point.y - rectStart.y;
 
       emitMessage({
-        type: "addRect",
+        type: 'addRect',
         tool,
         position: rectStart,
-        dimensions: { width, height },
+        dimensions: {width, height},
         color,
         strokeWidth,
       });
@@ -228,30 +227,30 @@ export const Palette = () => {
     }
 
     emitMessage({
-      type: "addText",
-      tool: "text",
+      type: 'addText',
+      tool: 'text',
       position: textPosition,
       text: textInput,
       color,
       fontSize,
     });
 
-    setTextInput("");
+    setTextInput('');
     setIsTextInputVisible(false);
   };
 
   const handleUndo = () => {
-    emitMessage({ type: "undo" });
+    emitMessage({type: 'undo'});
   };
 
   const handleRedo = () => {
-    emitMessage({ type: "redo" });
+    emitMessage({type: 'redo'});
   };
 
   useEffect(() => {
     const socketServer = async () => {
       try {
-        await fetch("/api/socket/io", { method: "GET" });
+        await fetch('/api/socket/io', {method: 'GET'});
       } catch (error) {
         console.error(error);
       }
@@ -259,21 +258,21 @@ export const Palette = () => {
 
     socketServer();
     const initSocket = () => {
-      const socketInstance = io("http://localhost:3000", {
-        path: "/api/socket/io",
+      const socketInstance = io('http://localhost:3000', {
+        path: '/api/socket/io',
         addTrailingSlash: false,
       });
 
-      socketInstance.on("connect", () => setIsConnected(true));
-      socketInstance.on("disconnect", () => setIsConnected(false));
-      socketInstance.on("connect_error", (err) =>
+      socketInstance.on('connect', () => setIsConnected(true));
+      socketInstance.on('disconnect', () => setIsConnected(false));
+      socketInstance.on('connect_error', (err) =>
         console.log(`connect_error due to ${err.message}`)
       );
 
-      socketInstance.on("message", (res) => {
+      socketInstance.on('message', (res) => {
         const data = res as EmitMouseData;
 
-        if (data.type === "startPaint") {
+        if (data.type === 'startPaint') {
           setHistory((history) => {
             const elements = history.elements.slice(0, history.currentIdx);
             return {
@@ -297,7 +296,7 @@ export const Palette = () => {
           });
         }
 
-        if (data.type === "painting") {
+        if (data.type === 'painting') {
           setHistory((prevHistory) => {
             if (prevHistory.currentIdx === 0) return prevHistory;
 
@@ -305,9 +304,9 @@ export const Palette = () => {
             const lastElement = prevHistory.elements[elementIndexToUpdate];
 
             if (
-              lastElement.tool !== "pen" &&
-              lastElement.tool !== "brush" &&
-              lastElement.tool !== "eraser"
+              lastElement.tool !== 'pen' &&
+              lastElement.tool !== 'brush' &&
+              lastElement.tool !== 'eraser'
             ) {
               return prevHistory;
             }
@@ -336,15 +335,15 @@ export const Palette = () => {
           });
         }
 
-        if (data.type === "addText") {
+        if (data.type === 'addText') {
           setHistory((history) => ({
             ...history,
             currentIdx: history.currentIdx + 1,
             elements: [
               ...history.elements.slice(0, history.currentIdx),
               {
-                tool: "text",
-                text: data.text || "",
+                tool: 'text',
+                text: data.text || '',
                 x: data.position.x,
                 y: data.position.y,
                 color: data.color,
@@ -354,14 +353,14 @@ export const Palette = () => {
           }));
         }
 
-        if (data.type === "addRect") {
+        if (data.type === 'addRect') {
           setHistory((history) => ({
             ...history,
             currentIdx: history.currentIdx + 1,
             elements: [
               ...history.elements.slice(0, history.currentIdx),
               {
-                tool: "square",
+                tool: 'square',
                 x: data.position.x,
                 y: data.position.y,
                 width: data.dimensions?.width || 0,
@@ -373,14 +372,14 @@ export const Palette = () => {
           }));
         }
 
-        if (data.type === "undo") {
+        if (data.type === 'undo') {
           setHistory((history) => ({
             ...history,
             currentIdx: Math.max(0, history.currentIdx - 1),
           }));
         }
 
-        if (data.type === "redo") {
+        if (data.type === 'redo') {
           setHistory((history) => ({
             ...history,
             currentIdx: Math.min(
@@ -412,17 +411,16 @@ export const Palette = () => {
           e.preventDefault();
           handleRedo();
         }
-      } else if (e.key === "Enter" && isTextInputVisible) {
+      } else if (e.key === 'Enter' && isTextInputVisible) {
         handleTextSubmit();
-      } else if (e.key === "Escape" && isTextInputVisible) {
+      } else if (e.key === 'Escape' && isTextInputVisible) {
         setIsTextInputVisible(false);
-        setTextInput("");
+        setTextInput('');
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isTextInputVisible, textInput]);
-
 
   if (!isConnected) {
     return (
@@ -458,7 +456,7 @@ export const Palette = () => {
             style={{
               left: `${textPosition.x}px`,
               top: `${textPosition.y}px`,
-              transform: "translate(10px, 10px)",
+              transform: 'translate(10px, 10px)',
             }}
           >
             <input
@@ -493,9 +491,9 @@ export const Palette = () => {
           <Layer>
             {elements.map((element, i) => {
               if (
-                element.tool === "pen" ||
-                element.tool === "brush" ||
-                element.tool === "eraser"
+                element.tool === 'pen' ||
+                element.tool === 'brush' ||
+                element.tool === 'eraser'
               ) {
                 return (
                   <Line
@@ -503,17 +501,17 @@ export const Palette = () => {
                     points={element.points}
                     stroke={element.color}
                     strokeWidth={element.strokeWidth}
-                    tension={element.tool === "brush" ? 0.5 : 0}
+                    tension={element.tool === 'brush' ? 0.5 : 0}
                     lineCap="round"
                     lineJoin="round"
                     globalCompositeOperation={
-                      element.tool === "eraser"
-                        ? "destination-out"
-                        : "source-over"
+                      element.tool === 'eraser'
+                        ? 'destination-out'
+                        : 'source-over'
                     }
                   />
                 );
-              } else if (element.tool === "text") {
+              } else if (element.tool === 'text') {
                 return (
                   <KonvaText
                     key={`text-${i}`}
@@ -524,7 +522,7 @@ export const Palette = () => {
                     fill={element.color}
                   />
                 );
-              } else if (element.tool === "square") {
+              } else if (element.tool === 'square') {
                 return (
                   <Rect
                     key={`rect-${i}`}
@@ -539,7 +537,7 @@ export const Palette = () => {
               }
               return null;
             })}
-            {rectStart && tool === "square" && (
+            {rectStart && tool === 'square' && (
               <Rect
                 x={rectStart.x}
                 y={rectStart.y}
